@@ -2,15 +2,11 @@
 /*
 Plugin Name: Extend Comment
 Version: 1.0
-Plugin URI: http://smartwebworker.com
-Description: A plug-in to add additional fields in the comment form.
-Author: Specky Geek
-Author URI: http://www.speckygeek.com
+Plugin URI: 
+Description: 
+Author: ExitDev3
+Author URI: 
 */
-
-// Add custom meta (ratings) fields to the default comment form
-// Default comment form includes name, email and URL
-// Default comment form elements are hidden when user is logged in
 
 add_filter('comment_form_default_fields','custom_fields');
 function custom_fields($fields) {
@@ -47,12 +43,12 @@ add_action( 'comment_form_after_fields', 'additional_fields' );
 
 function additional_fields () {
 	echo '<div dir="rtl" class="comment-form-rating"><span>';
-	for( $i=1; $i <= 5;$i++){
+	$arr = array( 5, 4, 3, 2, 1);
+		foreach ($arr as $value) {
 	echo '
-	<input class="rating__comment" type="radio" name="rating" id="'. $i .'" value="'. $i .'"/><label id="'. $i .'" for="'.$i.'"></label>
-
+	<input class="rating__comment" type="radio" name="rating" id="' . $value . '" value="' . $value . '"/><label id="' . $value . '" for="' . $value . '"></label>
 	';
-	} 
+	}
 	echo'</span></div>';
 
 }
@@ -124,7 +120,6 @@ function extend_comment_edit_metafields( $comment_id ) {
 	else :
 	delete_comment_meta( $comment_id, 'phone');
 	endif;
-		
 
 
 	if ( ( isset( $_POST['rating'] ) ) && ( $_POST['rating'] != '') ):
@@ -133,7 +128,6 @@ function extend_comment_edit_metafields( $comment_id ) {
 	else :
 	delete_comment_meta( $comment_id, 'rating');
 	endif;
-	
 }
 
 // Add the comment meta (saved earlier) to the comment text 
@@ -150,12 +144,64 @@ function modify_comment( $text ){
 	} 
 
 	if( $commentrating = get_comment_meta( get_comment_ID(), 'rating', true ) ) {
-		$commentrating = '<p class="comment-rating">	<img src="'. $plugin_url_path .
-		'/ExtendComment/images/'. $commentrating . 'star.gif"/><br/>Rating: <strong>'. $commentrating .' / 5</strong></p>';
+		$commentrating = '<div class="comment-rating">	<img src="'. $plugin_url_path .
+		'/extendcomment/images/'. $commentrating . 'star.png"/></div>' ;
 		$text = $text . $commentrating;
+	
 		return $text;		
 	} else {
 		return $text;		
-	}	 
+	}	
+
 }
 
+function ci_comment_rating_get_average_ratings( $id ) {
+	$comments = get_approved_comments( $id );
+	if ( $comments ) {
+		$i = 0;
+		$total = 0;
+		foreach( $comments as $comment ){
+			$rate = get_comment_meta( $comment->comment_ID, 'rating', true );
+			if( isset( $rate ) && '' !== $rate ) {
+				$i++;
+				$total += $rate;
+			}
+		}
+		if ( 0 === $i ) {
+			return false;
+		} else {
+			return round( $total / $i, 1 );
+		}
+	} else {
+		return false;
+	}
+}
+
+add_filter( 'the_title', 'ci_comment_rating_display_average_rating' );
+function ci_comment_rating_display_average_rating( $content ) {
+	global $post;
+	if ( false === ci_comment_rating_get_average_ratings( $post->ID ) ) {
+		return $content;
+	}
+	$stars   = '';
+	$average = ci_comment_rating_get_average_ratings( $post->ID );
+
+	for ( $i = 1; $i <= $average + 1; $i++ ) {
+		
+		$width = intval( $i - $average > 0 ? 20 - ( ( $i - $average ) * 20 ) : 20 );
+
+		if ( 0 === $width ) {
+			continue;
+		}
+
+		$stars .= '<span style="overflow:hidden; width:' . $width . 'px" class="dashicons dashicons-star-filled"></span>';
+
+		if ( $i - $average > 0 ) {
+			$stars .= '<span style="overflow:hidden; position:relative; left:-' . $width .'px;" class="dashicons dashicons-star-empty"></span>';
+		}
+	}
+	
+	$custom_content  = '<div class="average-rating"><span class="person__rait"> ' . $average .'</span> ' . $stars . '</div>';
+	$custom_content .= $content;
+	return $custom_content;
+}
