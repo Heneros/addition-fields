@@ -149,7 +149,8 @@ function modify_comment( $text ){
 		$text = $text . $commentrating;
 	
 		return $text;		
-	} else {
+	} 
+	else {
 		return $text;		
 	}	
 
@@ -183,25 +184,20 @@ function ci_comment_rating_display_average_rating( $content ) {
 	if ( false === ci_comment_rating_get_average_ratings( $post->ID ) ) {
 		return $content;
 	}
-	$stars   = '';
+	// $stars   = '';
 	$average = ci_comment_rating_get_average_ratings( $post->ID );
 
 	for ( $i = 1; $i <= $average + 1; $i++ ) {
-		
-		$width = intval( $i - $average > 0 ? 20 - ( ( $i - $average ) * 20 ) : 20 );
 
-		if ( 0 === $width ) {
+		if ( 0 === $average ) {
 			continue;
 		}
+		$plugin_url_path = WP_PLUGIN_URL;
 
-		$stars .= '<span style="overflow:hidden; width:' . $width . 'px" class="dashicons dashicons-star-filled"></span>';
-
-		if ( $i - $average > 0 ) {
-			$stars .= '<span style="overflow:hidden; position:relative; left:-' . $width .'px;" class="dashicons dashicons-star-empty"></span>';
-		}
 	}
-	
-	$custom_content  = '<div class="average-rating"><span class="person__rait"> ' . $average .'</span> ' . $stars . '</div>';
+	$averageNew =  number_format(floor($average));
+
+	$custom_content  = '<div class="average-rating"><img src="'. $plugin_url_path .'/extendcomment/images/'. $averageNew . '-star.png"/><span class="person__rait"><strong>'. $averageNew  . '</strong>'. '/5</span></div>';
 	$custom_content .= $content;
 	return $custom_content;
 }
